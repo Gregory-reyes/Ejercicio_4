@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser =require('body-parser');
 const mongoose = require('mongoose');//requiere el modelo de lideres
 const authenticate = require('../authenticate');
+const cors = require('./cors');
 
 const Leaders = require('../models/leaders');//define el leaderRouter
 //const promotions = require('./promotions');
@@ -10,7 +11,8 @@ const leaders = express.Router();
 leaders.use(bodyParser.json());// importante: esto básicamente configurará los métodos GET SET POST PUT DELETE
 
 leaders.route('/')
-.get((req,res,next) => {            //GET metodo
+.options(cors.corsWithOptions, (req, res) => {res.sendStatus(200); })
+.get(cors.cors,(req,res,next) => {            //GET metodo
     Leaders.find({})
     .then((leaders) =>{             //Si hay conexión
         res.statusCode = 200;
@@ -19,7 +21,7 @@ leaders.route('/')
     }, (err) => next(err))
     .catch((err) => next(err));     //Si hay error   
 })
-.post(authenticate.verifyUser,(req,res,next) =>{            //POST metodo
+.post(cors.corsWithOptions, authenticate.verifyUser,(req,res,next) =>{            //POST metodo
     Leaders.create(req.body)
     .then((leaders) =>{             //Si hay conexion
         console.log('Leader create',leaders);
@@ -29,11 +31,11 @@ leaders.route('/')
     }, (err) => next(err))
     .catch((err) => next(err)); 
 })
-.put(authenticate.verifyUser,(req,res,next) =>{             //PUT ahora es compatible   
+.put(cors.corsWithOptions, authenticate.verifyUser,(req,res,next) =>{             //PUT ahora es compatible   
     res.statusCode = 403;
     res.end('PUT operation not supported on /leaders'); //PUT no es compatible
 })
-.delete(authenticate.verifyUser,(req,res,next) => {         //DELETE metodo de borrar
+.delete(cors.corsWithOptions, authenticate.verifyUser,(req,res,next) => {         //DELETE metodo de borrar
     Leaders.remove({})
     .then((resp) => {               //Si hay conexion
         res.statusCode = 200;
@@ -42,10 +44,10 @@ leaders.route('/')
     }, (err) => next(err))
     .catch((err) => next(err));     //SI hay error
 });
-
     // importante: esto básicamente configurará los métodos GET SET POST PUT DELETE PERO para un líder individual   
 leaders.route('/:leaderId')
-.get((req,res,next) => {
+.options(cors.corsWithOptions, (req, res) => {res.sendStatus(200); })
+.get(cors.cors,(req,res,next) => {
     Leaders.findById(req.params.leaderId)
     .then((leader) =>{
         res.statusCode = 200;
@@ -54,11 +56,11 @@ leaders.route('/:leaderId')
     }, (err) => next(err))
     .catch((err) => next(err));
 })
-.post(authenticate.verifyUser,(req, res, next) => {
+.post(cors.corsWithOptions, authenticate.verifyUser,(req, res, next) => {
     res.statusCode = 403;
     res.end("Post operation not supported on /leaders/"+req.params.leaderId);
 })
-.put(authenticate.verifyUser,(req, res, next) => {    
+.put(cors.corsWithOptions, authenticate.verifyUser,(req, res, next) => {    
     Leaders.findByIdAndUpdate(req.params.leaderId, {
         $set: req.body
     }, { new: true})
@@ -69,7 +71,7 @@ leaders.route('/:leaderId')
     }, (err) => next(err))
     .catch((err) => next(err));
 })
-.delete(authenticate.verifyUser,(req, res, next) => {
+.delete(cors.corsWithOptions, authenticate.verifyUser,(req, res, next) => {
     Leaders.findByIdAndRemove(req.params.leaderId)
     .then((resp) => {
         res.statusCode = 200;
